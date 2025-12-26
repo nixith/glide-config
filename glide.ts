@@ -76,7 +76,7 @@ glide.keymaps.set("normal", "<leader>A", async () => {
   const audible_tabs = await browser.tabs.query({ audible: true })
 
   glide.commandline.show({
-    title: "open",
+    title: "open audio tab",
     options: audible_tabs.map((tab) => ({
       label: tab.title,
       async execute() {
@@ -143,7 +143,7 @@ glide.keymaps.set("normal", "<leader>o", async () => {
 
 
         // if we find a meatch
-        if (entry.title.includes(input)) {
+        if (entry.title.toLowerCase().includes(input.toLowerCase())) {
           const tab = await glide.tabs.get_first({
             url: entry.url,
           });
