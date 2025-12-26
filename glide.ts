@@ -110,11 +110,60 @@ const search_info: Record<string, { url: string, sep: string }> = {
   }
 } as const
 
+async function search_site_check(input: string) {
+  const terms = input.split(" ").filter(s => s)
+  const first = terms[0]
+  // check if it's a special search term
+  if (terms.length > 1 && first !== undefined && first in search_info) {
+    let info = search_info[first];
+    let query = info?.url + terms.slice(1).join(info?.sep)
+    browser.tabs.update((await glide.tabs.active()).id, {
+      url: query
+    })
+    return true
+  }
+  return false
+}
+
+async function about_check(input: string) {
+
+
+  if (input.startsWith("about:")) {
+    browser.tabs.update((await glide.tabs.active()).id, {
+      url: input
+    })
+    return true
+  }
+  return false
+}
+
+async function goto_if_url(input: string) {
+  let url: URL;
+  try {
+    url = new URL(input)
+  } catch (_) {
+    try {
+      url = new URL("http://" + input) // firefox automatically makes this https
+
+      // avoids single word searches becoming URLs
+      if (url.hostname.split(".").length == 1 && url.hostname !== "localhost") {
+        throw "probably not a hostname";
+      }
+
+      browser.tabs.update((await glide.tabs.active()).id, {
+        url: url.toString()
+      })
+    } catch (_) {
+      return false
+    }
+  }
+  return true
+  // so it IS a URL! Just go to it
+}
 
 /*
 * pick tabs via a selection of bookmarks and history
 */
-
 glide.keymaps.set("normal", "<leader>o", async () => {
 
   //let combined: Array<Browser.Bookmarks.BookmarkTreeNode | Browser.History.HistoryItem> = []
@@ -130,11 +179,7 @@ glide.keymaps.set("normal", "<leader>o", async () => {
   const newtab = (await browser.runtime.getManifest()).chrome_url_overrides?.newtab
   const startpage = glide.prefs.get("browser.startup.homepage")
 
-
   let filtered_combined = combined.filter(e => e.url !== startpage && e.url !== newtab)
-
-
-
 
   glide.commandline.show({
     title: "open",
@@ -168,44 +213,17 @@ glide.keymaps.set("normal", "<leader>o", async () => {
           }
           // if there isn't a match
         } else {
-          const terms = input.split(" ",)
-          const first = terms[0]
-          // check if it's a special search term
-          if (terms.length > 1 && first !== undefined && first in search_info) {
-            let info = search_info[first];
-            let query = info?.url + terms.slice(1).join(info?.sep)
-            browser.tabs.update((await glide.tabs.active()).id, {
-              url: query
+
+          let special_search = await about_check(input) || await search_site_check(input) || await goto_if_url(input)
+
+          if (!special_search) {
+            await browser.search.search({
+              query: input.split(" ").filter(s => s).join("+"),
+              tabId: (await glide.tabs.active()).id
             })
-
+            return true
           }
-
-          // check if it's (likely) a url we just go to
-          let url: URL;
-          try {
-            url = new URL(input)
-          } catch (_) {
-            try {
-              url = new URL("http://" + input) // firefox automatically makes this https
-
-              // avoids single word searches becoming URLs
-              if (url.hostname.split(".").length == 1 && url.hostname !== "localhost") {
-                throw "probably not a hostname";
-              }
-            } catch (_) { // probably not a url, so look it up in a search engine
-              browser.search.search({
-                query: terms.filter(s => s).join("+"),
-                tabId: (await glide.tabs.active()).id
-              })
-              return
-            }
-          }
-          // so it IS a URL! Just go to it
-          browser.tabs.update((await glide.tabs.active()).id, {
-            url: url.toString()
-          })
         }
-
       },
     })),
   });
