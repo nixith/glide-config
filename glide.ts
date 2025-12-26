@@ -104,10 +104,11 @@ glide.keymaps.set("normal", "<leader>A", async () => {
 const search_info: Record<string, { url: string, sep: string }> = {
   'youtube': {
     url: "https://www.youtube.com/results?search_query=", sep: "+"
+  },
+  'github': {
+    url: 'https://github.com/search?type=repositories&q=', sep: '+'
   }
 } as const
-
-if ("youtube" in search_info) { }
 
 
 /*
