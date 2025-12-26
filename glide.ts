@@ -116,24 +116,18 @@ async function search_site_check(input: string) {
   if (terms.length > 1 && first !== undefined && first in search_info) {
     let info = search_info[first];
     let query = info?.url + terms.slice(1).join(info?.sep)
-    browser.tabs.update((await glide.tabs.active()).id, {
-      url: query
-    })
-    return true
+    return query
   }
-  return false
+  return ""
 }
 
 async function about_check(input: string) {
 
 
   if (input.startsWith("about:")) {
-    browser.tabs.update((await glide.tabs.active()).id, {
-      url: input
-    })
-    return true
+    return input
   }
-  return false
+  return ""
 }
 
 async function goto_if_url(input: string) {
@@ -149,22 +143,124 @@ async function goto_if_url(input: string) {
         throw "probably not a hostname";
       }
 
-      browser.tabs.update((await glide.tabs.active()).id, {
-        url: url.toString()
-      })
+      return url.toString()
     } catch (_) {
-      return false
+      return ""
     }
   }
-  return true
   // so it IS a URL! Just go to it
 }
+
+glide.keymaps.set("normal", "<leader>P", async () => {
+  const tab = await glide.tabs.active()
+  const pin_status = tab.pinned
+  browser.tabs.update(tab.id, {
+    pinned: !pin_status
+  })
+})
+
+glide.keymaps.set("normal", "<leader>p", async () => {
+  const pinned_tabs = await glide.tabs.query({ pinned: true })
+
+  glide.commandline.show({
+    title: "open audio tab",
+    options: pinned_tabs.map((tab) => ({
+      label: tab.title ?? tab.url ?? "unreachable?",
+      async execute() {
+        const windowid = tab.windowId
+        if (windowid === undefined) {
+          return
+        }
+        await browser.windows.update(windowid, { focused: true })
+        await browser.tabs.update(tab.id, {
+          active: true,
+        });
+      },
+    })),
+
+
+  });
+
+})
 
 /*
 * pick tabs via a selection of bookmarks and history
 */
 glide.keymaps.set("normal", "<leader>o", async () => {
+  let filtered_combined = await get_bookmarks_and_history()
 
+  glide.commandline.show({
+    title: "open",
+    options: filtered_combined.map((entry) => ({
+      label: entry.title,
+      async execute({ input: input }) {
+        // if we find a meatch
+        if (entry.title.toLowerCase().includes(input.toLowerCase())) {
+          swap_to_tab_if_exists(entry.url ?? "unreachable")
+        } else { // if there isn't a match
+          let res = await open_get_url(input)
+          if (res === "") {
+            await browser.search.search({
+              query: input.split(" ").filter(s => s).join("+"),
+              disposition: "CURRENT_TAB"
+            })
+
+          } else {
+            await browser.tabs.update((await glide.tabs.active()).id, {
+              active: true,
+              url: res
+            });
+          }
+        }
+      },
+    })),
+  });
+}, { description: "Open the site searcher" });
+
+
+/*
+* pick tabs via a selection of bookmarks and history, new tab
+*/
+glide.keymaps.set("normal", "<leader>O", async () => {
+  let filtered_combined = await get_bookmarks_and_history()
+
+  glide.commandline.show({
+    title: "open (new tab)",
+    options: filtered_combined.map((entry) => ({
+      label: entry.title,
+      async execute({ input: input }) {
+        // if we find a meatch
+
+        console.log("++++++++++looking++++++++++++")
+        if (entry.title.toLowerCase().includes(input.toLowerCase())) {
+          swap_to_tab_if_exists(entry.url ?? "unreachable")
+        } else { // if there isn't a match
+          let res = await open_get_url(input)
+          const tab = await browser.tabs.create({});
+          console.log(res)
+          if (res === "") {
+            console.log("++++++++++searching++++++++++++")
+            console.log(input)
+            const query = input.split(" ").filter(s => s).join("+")
+            console
+            console.log(query)
+            await browser.search.search({
+              disposition: "NEW_TAB",
+              query: query
+            })
+          } else {
+            await browser.tabs.update(tab.id, {
+              active: true,
+              url: res
+            });
+          }
+        }
+      },
+    })),
+  });
+}, { description: "Open the site searcher (New Tab)" });
+
+async function get_bookmarks_and_history() {
   //let combined: Array<Browser.Bookmarks.BookmarkTreeNode | Browser.History.HistoryItem> = []
   let combined = []
   const bookmarks = await browser.bookmarks.getRecent(20);
@@ -179,54 +275,37 @@ glide.keymaps.set("normal", "<leader>o", async () => {
   const startpage = glide.prefs.get("browser.startup.homepage")
 
   let filtered_combined = combined.filter(e => e.url !== startpage && e.url !== newtab)
+  return filtered_combined
+}
 
-  glide.commandline.show({
-    title: "open",
-    options: filtered_combined.map((entry) => ({
-      label: entry.title,
-      async execute({ input: input }) {
-
-
-        // if we find a meatch
-        if (entry.title.toLowerCase().includes(input.toLowerCase())) {
-          const tab = await glide.tabs.get_first({
-            url: entry.url,
-          });
-          if (tab) {
-            const windowid = tab.windowId;
-            if (windowid === undefined) {
-              return
-            }
-            await browser.windows.update(windowid, {
-              focused: true
-            })
-            await browser.tabs.update(tab.id, {
-              active: true,
-            });
-          } else {
-
-            await browser.tabs.update((await glide.tabs.active()).id, {
-              active: true,
-              url: entry.url,
-            });
-          }
-          // if there isn't a match
-        } else {
-
-          let special_search = await about_check(input) || await search_site_check(input) || await goto_if_url(input)
-
-          if (!special_search) {
-            await browser.search.search({
-              query: input.split(" ").filter(s => s).join("+"),
-              tabId: (await glide.tabs.active()).id
-            })
-            return true
-          }
-        }
-      },
-    })),
+async function swap_to_tab_if_exists(url: string) {
+  const tab = await glide.tabs.get_first({
+    url: url,
   });
-}, { description: "Open the site searcher" });
+  if (tab) {
+    const windowid = tab.windowId;
+    if (windowid === undefined) {
+      return
+    }
+    await browser.windows.update(windowid, {
+      focused: true
+    })
+    await browser.tabs.update(tab.id, {
+      active: true,
+    });
+  } else {
+
+    await browser.tabs.update((await glide.tabs.active()).id, {
+      active: true,
+      url: url,
+    });
+  }
+}
+
+async function open_get_url(input: string) {
+  let special_search = await about_check(input) || await search_site_check(input) || await goto_if_url(input)
+  return special_search ?? ""
+}
 
 
 glide.keymaps.set("normal", "p", async () => {
@@ -259,7 +338,6 @@ async function copyFlakeGHFormat(lead: string) { // should work for forgejo, cod
 
 
 // copy flake urls
-// github (this pattern match could probably be better)
 glide.autocmds.create("UrlEnter", {
   hostname: "github.com"
 }, async () => {
@@ -276,9 +354,5 @@ glide.o.hint_size = "14px";
 // glide can edit the default browser effectively
 
 glide.prefs.set("browser.startup.homepage", "https://kagi.com")
-glide.keymaps.set("normal", "<leader>a", async () => {
-  glide.excmds.execute("commandline_show tab");
-});
-
 
 
