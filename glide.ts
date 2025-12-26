@@ -80,7 +80,6 @@ glide.keymaps.set("normal", "<leader>A", async () => {
     options: audible_tabs.map((tab) => ({
       label: tab.title ?? tab.url ?? "unreachable?",
       async execute() {
-        console.log(tab)
         const windowid = tab.windowId
         if (windowid === undefined) {
           return
