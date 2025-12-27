@@ -135,19 +135,23 @@ async function get_address(input: string) {
 
   if (URL.canParse(input)) {
     url = URL.parse(input)
+    console.log(url)
   } else {
-
     try {
-      let url = new URL("http://" + input) // firefox automatically makes this https
+      url = new URL("http://" + input) // firefox automatically makes this https
+      console.log(url)
 
       // avoids single word searches becoming URLs
       if (url.hostname.split(".").length == 1 && url.hostname !== "localhost") {
         throw "probably not a hostname";
       }
-
-    } catch (_) { return "" }
+    } catch (err) {
+      console.log("err:" + err)
+      return ""
+    }
   }
 
+  console.log(url)
   return url?.toString()
   // so it IS a URL! Just go to it
 }
