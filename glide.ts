@@ -162,7 +162,7 @@ glide.keymaps.set("normal", "<leader>P", async () => {
   browser.tabs.update(tab.id, {
     pinned: !pin_status
   })
-})
+}, { description: "toggle pinned status" })
 
 glide.keymaps.set("normal", "<leader>p", async () => {
   const pinned_tabs = await glide.tabs.query({ pinned: true })
@@ -184,7 +184,7 @@ glide.keymaps.set("normal", "<leader>p", async () => {
     })),
   });
 
-})
+}, { description: "search pinned tabs" })
 
 
 /*
