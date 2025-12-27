@@ -54,12 +54,15 @@ glide.keymaps.set(
 
 
 glide.keymaps.set("normal", "yf", async () => {
-
   glide.hints.show({
     selector: ":any-link",
     async action({ content }) {
-      const link = await content.execute((target) =>
-        target.getAttribute("href") ?? ""
+      const link: string = await content.execute((target) => {
+        if (target instanceof HTMLAreaElement || target instanceof HTMLAnchorElement) {
+          return target.href
+        }
+        return ""
+      }
       );
       navigator.clipboard.writeText(link)
     },
@@ -346,7 +349,7 @@ glide.autocmds.create("UrlEnter", {
 }, async () => {
   glide.buf.keymaps.set(
     "normal",
-    "yf",
+    "yF",
     async () => { await copyFlakeGHFormat("github") }
   );
 });
