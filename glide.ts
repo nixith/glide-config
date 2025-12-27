@@ -18,17 +18,17 @@
 
 
 // Try typing `glide.` and see what you can do!
-glide.keymaps.set(
-  "command",
-  "<c-j>",
-  "commandline_focus_next",
-);
-
-glide.keymaps.set(
-  "command",
-  "<c-k>",
-  "commandline_focus_back",
-);
+// glide.keymaps.set(
+//   "command",
+//   "<c-j>",
+//   "commandline_focus_next",
+// );
+//
+// glide.keymaps.set(
+//   "command",
+//   "<c-k>",
+//   "commandline_focus_back",
+// );
 
 // reverse ordering - works better in my mind
 glide.keymaps.set(
@@ -65,7 +65,7 @@ glide.keymaps.set("normal", "yf", async () => {
     },
   })
 
-}, { description: "copy lint at hint" })
+}, { description: "copy link at hint" })
 
 
 /*
@@ -182,8 +182,6 @@ glide.keymaps.set("normal", "<leader>p", async () => {
         });
       },
     })),
-
-
   });
 
 })
