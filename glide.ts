@@ -130,24 +130,25 @@ async function about_check(input: string) {
   return ""
 }
 
-async function goto_if_url(input: string) {
-  let url: URL;
-  try {
-    url = new URL(input)
-  } catch (_) {
+async function get_address(input: string) {
+  let url = null
+
+  if (URL.canParse(input)) {
+    url = URL.parse(input)
+  } else {
+
     try {
-      url = new URL("http://" + input) // firefox automatically makes this https
+      let url = new URL("http://" + input) // firefox automatically makes this https
 
       // avoids single word searches becoming URLs
       if (url.hostname.split(".").length == 1 && url.hostname !== "localhost") {
         throw "probably not a hostname";
       }
 
-      return url.toString()
-    } catch (_) {
-      return ""
-    }
+    } catch (_) { return "" }
   }
+
+  return url?.toString()
   // so it IS a URL! Just go to it
 }
 
@@ -182,6 +183,7 @@ glide.keymaps.set("normal", "<leader>p", async () => {
   });
 
 })
+
 
 /*
 * pick tabs via a selection of bookmarks and history
@@ -303,7 +305,7 @@ async function swap_to_tab_if_exists(url: string) {
 }
 
 async function open_get_url(input: string) {
-  let special_search = await about_check(input) || await search_site_check(input) || await goto_if_url(input)
+  let special_search = await about_check(input) || await search_site_check(input) || await get_address(input)
   return special_search ?? ""
 }
 
@@ -311,18 +313,17 @@ async function open_get_url(input: string) {
 glide.keymaps.set("normal", "p", async () => {
   const c = navigator.clipboard
   const url_maybe = await c.readText()
-  let url;
-  try { // check if clipboard content is a url
-    url = new URL(url_maybe);
-  } catch (_) {
-    return false;
+
+  let address = await get_address(url_maybe)
+
+  if (address !== "") {
+    const tab = await glide.tabs.active()
+
+    browser.tabs.update(tab.id, {
+      url: address
+    })
   }
 
-  const tab = await glide.tabs.active()
-
-  browser.tabs.update(tab.id, {
-    url: url.toString()
-  })
 
 }, { description: "paste url from clipboard" });
 
