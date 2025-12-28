@@ -43,6 +43,13 @@ glide.keymaps.set(
   "tab_next",
 );
 
+glide.keymaps.set(
+  "normal",
+  "<C-k>",
+  async ({ tab_id }) => {
+  }
+);
+
 // glide.styles.add(css`
 //   #TabsToolbar {
 //     visibility: collapse !important;
@@ -193,7 +200,7 @@ glide.keymaps.set("normal", "<leader>p", async () => {
 /*
 * pick tabs via a selection of bookmarks and history
 */
-glide.keymaps.set("normal", "<leader>o", async () => {
+glide.keymaps.set("normal", "<leader>o", async ({ tab_id }) => {
   let filtered_combined = await get_bookmarks_and_history()
 
   glide.commandline.show({
@@ -203,7 +210,7 @@ glide.keymaps.set("normal", "<leader>o", async () => {
       async execute({ input: input }) {
         // if we find a meatch
         if (entry.title.toLowerCase().includes(input.toLowerCase())) {
-          swap_to_tab_if_exists(entry.url ?? "unreachable")
+          swap_to_selected_tab(entry.url ?? "unreachable")
         } else { // if there isn't a match
           let res = await open_get_url(input)
           if (res === "") {
@@ -213,7 +220,7 @@ glide.keymaps.set("normal", "<leader>o", async () => {
             })
 
           } else {
-            await browser.tabs.update((await glide.tabs.active()).id, {
+            await browser.tabs.update(tab_id, {
               active: true,
               url: res
             });
@@ -240,7 +247,7 @@ glide.keymaps.set("normal", "<leader>O", async () => {
 
         console.log("++++++++++looking++++++++++++")
         if (entry.title.toLowerCase().includes(input.toLowerCase())) {
-          swap_to_tab_if_exists(entry.url ?? "unreachable")
+          swap_to_selected_tab(entry.url ?? "unreachable")
         } else { // if there isn't a match
           let res = await open_get_url(input)
           const tab = await browser.tabs.create({});
@@ -285,7 +292,7 @@ async function get_bookmarks_and_history() {
   return filtered_combined
 }
 
-async function swap_to_tab_if_exists(url: string) {
+async function swap_to_selected_tab(url: string) {
   const tab = await glide.tabs.get_first({
     url: url,
   });
@@ -315,16 +322,15 @@ async function open_get_url(input: string) {
 }
 
 
-glide.keymaps.set("normal", "p", async () => {
+glide.keymaps.set("normal", "p", async ({ tab_id }) => {
   const c = navigator.clipboard
   const url_maybe = await c.readText()
 
   let address = await get_address(url_maybe)
 
   if (address !== "") {
-    const tab = await glide.tabs.active()
 
-    browser.tabs.update(tab.id, {
+    browser.tabs.update(tab_id, {
       url: address
     })
   }
@@ -333,8 +339,8 @@ glide.keymaps.set("normal", "p", async () => {
 }, { description: "paste url from clipboard" });
 
 
-async function copyFlakeGHFormat(lead: string) { // should work for forgejo, codeberg, gitlab (ideally)
-  const url = (await glide.tabs.active()).url?.split("/")
+async function copyFlakeGHFormat(tab_id: number, lead: string) { // should work for forgejo, codeberg, gitlab (ideally)
+  const url = (await browser.tabs.get(tab_id)).url?.split("/")
   if (url !== undefined && url[3] !== undefined && url[4] !== undefined) {
     // we want split 4 and 5
     const flake_url = lead.concat(":", url[3], "/", url[4])
@@ -346,11 +352,11 @@ async function copyFlakeGHFormat(lead: string) { // should work for forgejo, cod
 // copy flake urls
 glide.autocmds.create("UrlEnter", {
   hostname: "github.com"
-}, async () => {
+}, async ({ tab_id }) => {
   glide.buf.keymaps.set(
     "normal",
     "yF",
-    async () => { await copyFlakeGHFormat("github") }
+    async () => { await copyFlakeGHFormat(tab_id, "github") }
   );
 });
 
