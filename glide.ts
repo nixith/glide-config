@@ -43,12 +43,12 @@ glide.keymaps.set(
   "tab_next",
 );
 
-glide.keymaps.set(
-  "normal",
-  "<C-k>",
-  async ({ tab_id }) => {
-  }
-);
+// glide.keymaps.set(
+//   "normal",
+//   "<C-k>",
+//   async ({ tab_id }) => {
+//   }
+// );
 
 // glide.styles.add(css`
 //   #TabsToolbar {
@@ -92,6 +92,7 @@ glide.keymaps.set("normal", "<leader>A", async () => {
       async execute() {
         const windowid = tab.windowId
         if (windowid === undefined) {
+          console.log("no window")
           return
         }
         await browser.windows.update(windowid, { focused: true })
@@ -212,10 +213,10 @@ glide.keymaps.set("normal", "<leader>o", async ({ tab_id }) => {
         if (entry.title.toLowerCase().includes(input.toLowerCase())) {
           swap_to_selected_tab(entry.url ?? "unreachable")
         } else { // if there isn't a match
-          let res = await open_get_url(input)
+          let res = await get_url_from(input)
           if (res === "") {
             await browser.search.search({
-              query: input.split(" ").filter(s => s).join("+"),
+              query: input.split(" ").filter(s => s).join(" "),
               disposition: "CURRENT_TAB"
             })
 
@@ -249,13 +250,13 @@ glide.keymaps.set("normal", "<leader>O", async () => {
         if (entry.title.toLowerCase().includes(input.toLowerCase())) {
           swap_to_selected_tab(entry.url ?? "unreachable")
         } else { // if there isn't a match
-          let res = await open_get_url(input)
+          let res = await get_url_from(input)
           const tab = await browser.tabs.create({});
           console.log(res)
           if (res === "") {
             console.log("++++++++++searching++++++++++++")
             console.log(input)
-            const query = input.split(" ").filter(s => s).join("+")
+            const query = input.split(" ").filter(s => s).join(" ")
             console
             console.log(query)
             await browser.search.search({
@@ -316,7 +317,7 @@ async function swap_to_selected_tab(url: string) {
   }
 }
 
-async function open_get_url(input: string) {
+async function get_url_from(input: string) {
   let special_search = await about_check(input) || await search_site_check(input) || await get_address(input)
   return special_search ?? ""
 }
@@ -326,12 +327,17 @@ glide.keymaps.set("normal", "p", async ({ tab_id }) => {
   const c = navigator.clipboard
   const url_maybe = await c.readText()
 
-  let address = await get_address(url_maybe)
+  let address = await get_url_from(url_maybe)
 
   if (address !== "") {
 
     browser.tabs.update(tab_id, {
       url: address
+    })
+  } else {
+    await browser.search.search({
+      query: url_maybe.split(" ").filter(s => s).join(" "),
+      disposition: "CURRENT_TAB"
     })
   }
 
@@ -366,5 +372,3 @@ glide.o.hint_size = "14px";
 // glide can edit the default browser effectively
 
 glide.prefs.set("browser.startup.homepage", "https://kagi.com")
-
-
