@@ -92,7 +92,6 @@ glide.keymaps.set("normal", "<leader>A", async () => {
       async execute() {
         const windowid = tab.windowId
         if (windowid === undefined) {
-          console.log("no window")
           return
         }
         await browser.windows.update(windowid, { focused: true })
@@ -146,23 +145,19 @@ async function get_address(input: string) {
 
   if (URL.canParse(input)) {
     url = URL.parse(input)
-    console.log(url)
   } else {
     try {
       url = new URL("http://" + input) // firefox automatically makes this https
-      console.log(url)
 
       // avoids single word searches becoming URLs
       if (url.hostname.split(".").length == 1 && url.hostname !== "localhost") {
         throw "probably not a hostname";
       }
     } catch (err) {
-      console.log("err:" + err)
       return ""
     }
   }
 
-  console.log(url)
   return url?.toString()
   // so it IS a URL! Just go to it
 }
@@ -246,19 +241,14 @@ glide.keymaps.set("normal", "<leader>O", async () => {
       async execute({ input: input }) {
         // if we find a meatch
 
-        console.log("++++++++++looking++++++++++++")
         if (entry.title.toLowerCase().includes(input.toLowerCase())) {
           swap_to_selected_tab(entry.url ?? "unreachable")
         } else { // if there isn't a match
           let res = await get_url_from(input)
           const tab = await browser.tabs.create({});
-          console.log(res)
           if (res === "") {
-            console.log("++++++++++searching++++++++++++")
-            console.log(input)
             const query = input.split(" ").filter(s => s).join(" ")
             console
-            console.log(query)
             await browser.search.search({
               disposition: "NEW_TAB",
               query: query
