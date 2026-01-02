@@ -266,7 +266,7 @@ async function get_bookmarks_and_history() {
   bookmarks.forEach(bmark => combined.push({ title: bmark.title, url: bmark.url }))
   combined.push(...bookmarks)
 
-  const history = await browser.history.search({ text: "", maxResults: 100 })
+  const history = await browser.history.search({ text: "" })
   history.forEach(entry => combined.push({ title: entry.title, url: entry.url }))
 
   // filtering
