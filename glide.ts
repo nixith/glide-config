@@ -16,14 +16,18 @@
 //   https://github.com/glide-browser/glide/blob/main/src/glide/browser/base/content/plugins/keymaps.mts
 
 // prefs and options
-glide.o.hint_size = "14px";
+const opts = glide.o
+opts.hint_size = "14px";
+//opts.native_tabs = "autohide";
+
 // TODO: set up kagi as the search engine when
 // glide can edit the default browser effectively
-
 const prefs = glide.prefs
 prefs.set("browser.startup.homepage", "https://kagi.com");
 prefs.set("sidebar.verticalTabs", true);
 prefs.set("sidebar.expandOnHover", true);
+
+
 
 // glide.keymaps.set(
 //   "normal",
@@ -59,12 +63,10 @@ glide.keymaps.set("normal", "yf", async () => {
 
 }, { description: "copy link at hint" })
 
-
 /*
  * pick audible tabs (all windows)
  */
 glide.keymaps.set("normal", "<leader>A", async () => {
-
   const audible_tabs = await browser.tabs.query({ audible: true })
 
   glide.commandline.show({
