@@ -14,21 +14,15 @@
 // Most default keymappings are defined here:
 //
 //   https://github.com/glide-browser/glide/blob/main/src/glide/browser/base/content/plugins/keymaps.mts
-//
+
+// prefs and options
+glide.o.hint_size = "14px";
+// TODO: set up kagi as the search engine when
+// glide can edit the default browser effectively
+
+glide.prefs.set("browser.startup.homepage", "https://kagi.com")
 
 
-// Try typing `glide.` and see what you can do!
-// glide.keymaps.set(
-//   "command",
-//   "<c-j>",
-//   "commandline_focus_next",
-// );
-//
-// glide.keymaps.set(
-//   "command",
-//   "<c-k>",
-//   "commandline_focus_back",
-// );
 
 // reverse ordering - works better in my mind
 glide.keymaps.set(
@@ -357,8 +351,3 @@ glide.autocmds.create("UrlEnter", {
 });
 
 
-glide.o.hint_size = "14px";
-// TODO: set up kagi as the search engine when
-// glide can edit the default browser effectively
-
-glide.prefs.set("browser.startup.homepage", "https://kagi.com")
