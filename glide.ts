@@ -20,7 +20,10 @@ glide.o.hint_size = "14px";
 // TODO: set up kagi as the search engine when
 // glide can edit the default browser effectively
 
-glide.prefs.set("browser.startup.homepage", "https://kagi.com")
+const prefs = glide.prefs
+prefs.set("browser.startup.homepage", "https://kagi.com");
+prefs.set("sidebar.verticalTabs", true);
+prefs.set("sidebar.expandOnHover", true);
 
 // glide.keymaps.set(
 //   "normal",
