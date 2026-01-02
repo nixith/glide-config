@@ -351,3 +351,31 @@ glide.autocmds.create("UrlEnter", {
 });
 
 
+
+
+// redirects
+async function redir_host(new_host: string, tab_id: number) {
+  const tab = await browser.tabs.get(tab_id);
+  assert(tab.url !== undefined, "not sure how this would be the case? trace code path for improper usage")
+  let old_url = new URL(tab.url);
+  old_url.host = new_host;
+  return old_url.toString()
+}
+
+/**
+ * redirect `old_host` to `new_host` whenever it is visited
+ */
+async function create_redirect(old_host: string, new_host: string) {
+  glide.autocmds.create("UrlEnter", {
+    hostname: old_host
+  }, async ({ tab_id }) => {
+    let new_url = await redir_host(new_host, tab_id)
+    browser.tabs.update(tab_id, { url: new_url })
+  });
+}
+
+
+// reddit to old reddit
+create_redirect("www.reddit.com", "old.reddit.com")
+// eventually I will not have to go to this site. Some day.
+create_redirect("x.com", "nitter.net")
