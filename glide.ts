@@ -22,21 +22,6 @@ glide.o.hint_size = "14px";
 
 glide.prefs.set("browser.startup.homepage", "https://kagi.com")
 
-
-
-// reverse ordering - works better in my mind
-glide.keymaps.set(
-  "normal",
-  "<C-j>",
-  "tab_prev",
-);
-
-glide.keymaps.set(
-  "normal",
-  "<C-k>",
-  "tab_next",
-);
-
 // glide.keymaps.set(
 //   "normal",
 //   "<C-k>",
